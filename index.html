@@ -81,13 +81,15 @@ function onScanSuccess(decodedText) {
   lookupEmployee(employeeId);
 }
 
+
+
+
 function lookupEmployee(employeeId) {
 
   const appsScriptUrl =
     "https://script.google.com/macros/s/AKfycbyWTj7a6aopQprKC9Cf4luSzPhPmOyfI9HLadhKgxwmVVAs6MuscfyiYfVSj5aSJ3zpKA/exec";
 
-  const script =
-    document.createElement("script");
+  const script = document.createElement("script");
 
   script.src =
     appsScriptUrl +
@@ -96,11 +98,17 @@ function lookupEmployee(employeeId) {
     encodeURIComponent(employeeId) +
     "&callback=showEmployee";
 
+  script.onerror = function() {
+    document.getElementById("result").innerHTML =
+      "<strong>Lookup failed.</strong><br>Please try again.";
+    badgeProcessed = false;
+  };
+
   document.body.appendChild(script);
 }
 
 
-function showEmployee(employee) {
+window.showEmployee = function(employee) {
 
   const result =
     document.getElementById("result");
@@ -112,10 +120,8 @@ function showEmployee(employee) {
       "<p>Please try your badge again.</p>";
 
     setTimeout(resetScanner, 3000);
-
     return;
   }
-
 
   if (
     String(employee.status).toUpperCase() === "IN"
@@ -125,9 +131,7 @@ function showEmployee(employee) {
       "<h2>Welcome, " +
       employee.name +
       "!</h2>" +
-
-      "<p>You are currently " +
-      "<strong>CLOCKED IN</strong>.</p>";
+      "<p>You are currently <strong>CLOCKED IN</strong>.</p>";
 
   } else {
 
@@ -135,12 +139,12 @@ function showEmployee(employee) {
       "<h2>Welcome, " +
       employee.name +
       "!</h2>" +
-
-      "<p>You are currently " +
-      "<strong>CLOCKED OUT</strong>.</p>";
+      "<p>You are currently <strong>CLOCKED OUT</strong>.</p>";
 
   }
-}
+};
+
+   
 
 
 function resetScanner() {
