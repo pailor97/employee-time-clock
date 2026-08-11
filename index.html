@@ -65,6 +65,7 @@
 <script>
 
 let badgeProcessed = false;
+let currentEmployeeId = "";
 
 function onScanSuccess(decodedText) {
 
@@ -72,13 +73,13 @@ function onScanSuccess(decodedText) {
 
   badgeProcessed = true;
 
-  const employeeId =
+  currentEmployeeId =
     decodedText.trim().toUpperCase();
 
   document.getElementById("result").innerHTML =
     "Looking up employee...";
 
-  lookupEmployee(employeeId);
+  lookupEmployee(currentEmployeeId);
 }
 
 
@@ -120,18 +121,28 @@ window.showEmployee = function(employee) {
       "<p>Please try your badge again.</p>";
 
     setTimeout(resetScanner, 3000);
+
     return;
   }
 
+
   if (
-    String(employee.status).toUpperCase() === "IN"
+    String(employee.status)
+      .toUpperCase() === "IN"
   ) {
 
     result.innerHTML =
       "<h2>Welcome, " +
       employee.name +
       "!</h2>" +
-      "<p>You are currently <strong>CLOCKED IN</strong>.</p>";
+
+      "<p>You are currently " +
+      "<strong>CLOCKED IN</strong>.</p>" +
+
+      "<button class='clockOut' " +
+      "onclick=\"sendClockAction('CLOCK OUT')\">" +
+      "CLOCK OUT" +
+      "</button>";
 
   } else {
 
@@ -139,12 +150,49 @@ window.showEmployee = function(employee) {
       "<h2>Welcome, " +
       employee.name +
       "!</h2>" +
-      "<p>You are currently <strong>CLOCKED OUT</strong>.</p>";
 
+      "<p>You are currently " +
+      "<strong>CLOCKED OUT</strong>.</p>" +
+
+      "<button class='clockIn' " +
+      "onclick=\"sendClockAction('CLOCK IN')\">" +
+      "CLOCK IN" +
+      "</button>";
   }
 };
 
-   
+function sendClockAction(action) {
+
+  const appsScriptUrl =
+    "https://script.google.com/macros/s/AKfycbyWTj7a6aopQprKC9Cf4luSzPhPmOyfI9HLadhKgxwmVVAs6MuscfyiYfVSj5aSJ3zpKA/exec";
+
+  document.getElementById("result").innerHTML =
+    "<h2>Processing...</h2>";
+
+  const script =
+    document.createElement("script");
+
+  script.src =
+    appsScriptUrl +
+    "?action=clock" +
+    "&employeeId=" +
+    encodeURIComponent(currentEmployeeId) +
+    "&clockAction=" +
+    encodeURIComponent(action) +
+    "&callback=showClockConfirmation" +
+    "&_=" + Date.now();
+
+  script.onerror = function() {
+
+    document.getElementById("result").innerHTML =
+      "<h2>Clock action failed.</h2>" +
+      "<p>Please try again.</p>";
+
+    badgeProcessed = false;
+  };
+
+  document.body.appendChild(script);
+}
 
 
 function resetScanner() {
