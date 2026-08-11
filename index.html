@@ -7,6 +7,25 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
+    button {
+      font-size: 28px;
+      font-weight: bold;
+      padding: 20px 40px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .clockIn {
+      background: #28a745;
+      color: white;
+    }
+
+    .clockOut {
+      background: #dc3545;
+      color: white;
+    }
     body {
       font-family: Arial, sans-serif;
       text-align: center;
@@ -194,10 +213,50 @@ function sendClockAction(action) {
   document.body.appendChild(script);
 }
 
+window.showClockConfirmation =
+function(response) {
+
+  const result =
+    document.getElementById("result");
+
+  if (!response.success) {
+
+    result.innerHTML =
+      "<h2>Something went wrong.</h2>" +
+      "<p>Please ask your supervisor for help.</p>";
+
+    setTimeout(resetScanner, 4000);
+
+    return;
+  }
+
+
+  result.innerHTML =
+    "<h2>✓ " +
+    response.action +
+    " SUCCESSFUL</h2>" +
+
+    "<p><strong>" +
+    response.name +
+    "</strong></p>" +
+
+    "<p>" +
+    response.time +
+    "</p>" +
+
+    "<p>Please remove your badge.</p>";
+
+
+  setTimeout(
+    resetScanner,
+    4000
+  );
+};
 
 function resetScanner() {
 
   badgeProcessed = false;
+  currentEmployeeId = "";
 
   document.getElementById("result").innerHTML =
     "Waiting for badge...";
