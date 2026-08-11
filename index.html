@@ -7,6 +7,46 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f5f5f5;
+      padding: 40px 20px;
+    }
+
+    .clock {
+      background: white;
+      max-width: 700px;
+      margin: auto;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,.15);
+    }
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-size: 32px;
+    }
+
+    p {
+      font-size: 22px;
+    }
+
+    #reader {
+      width: 500px;
+      max-width: 100%;
+      margin: 30px auto;
+    }
+
+    #result {
+      font-size: 26px;
+      margin-top: 25px;
+    }
+
     button {
       font-size: 28px;
       font-weight: bold;
@@ -26,39 +66,9 @@
       background: #dc3545;
       color: white;
     }
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f5f5f5;
-      padding: 40px 20px;
-    }
 
-    .clock {
-      background: white;
-      max-width: 700px;
-      margin: auto;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0,0,0,.15);
-    }
-
-    h1 {
-      font-size: 42px;
-    }
-
-    p {
-      font-size: 22px;
-    }
-
-    #reader {
-      width: 500px;
-      max-width: 100%;
-      margin: 30px auto;
-    }
-
-    #result {
-      font-size: 28px;
-      margin-top: 25px;
+    .success {
+      font-size: 34px;
       font-weight: bold;
     }
   </style>
@@ -80,11 +90,18 @@
 
   </div>
 
-
 <script>
+
+const appsScriptUrl =
+  "https://script.google.com/macros/s/AKfycbyWTj7a6aopQprKC9Cf4luSzPhPmOyfI9HLadhKgxwmVVAs6MuscfyiYfVSj5aSJ3zpKA/exec";
 
 let badgeProcessed = false;
 let currentEmployeeId = "";
+
+
+/* -----------------------------
+   QR SCANNER
+----------------------------- */
 
 function onScanSuccess(decodedText) {
 
@@ -102,26 +119,35 @@ function onScanSuccess(decodedText) {
 }
 
 
+function onScanFailure(error) {
+  // Ignore normal scan failures while camera is searching
+}
 
+
+/* -----------------------------
+   EMPLOYEE LOOKUP
+----------------------------- */
 
 function lookupEmployee(employeeId) {
 
-  const appsScriptUrl =
-    "https://script.google.com/macros/s/AKfycbyWTj7a6aopQprKC9Cf4luSzPhPmOyfI9HLadhKgxwmVVAs6MuscfyiYfVSj5aSJ3zpKA/exec";
-
-  const script = document.createElement("script");
+  const script =
+    document.createElement("script");
 
   script.src =
     appsScriptUrl +
     "?action=lookup" +
     "&employeeId=" +
     encodeURIComponent(employeeId) +
-    "&callback=showEmployee";
+    "&callback=showEmployee" +
+    "&_=" + Date.now();
 
   script.onerror = function() {
+
     document.getElementById("result").innerHTML =
-      "<strong>Lookup failed.</strong><br>Please try again.";
-    badgeProcessed = false;
+      "<h2>Lookup failed.</h2>" +
+      "<p>Please try again.</p>";
+
+    setTimeout(resetScanner, 3000);
   };
 
   document.body.appendChild(script);
@@ -180,10 +206,12 @@ window.showEmployee = function(employee) {
   }
 };
 
-function sendClockAction(action) {
 
-  const appsScriptUrl =
-    "https://script.google.com/macros/s/AKfycbyWTj7a6aopQprKC9Cf4luSzPhPmOyfI9HLadhKgxwmVVAs6MuscfyiYfVSj5aSJ3zpKA/exec";"
+/* -----------------------------
+   CLOCK IN / CLOCK OUT
+----------------------------- */
+
+function sendClockAction(action) {
 
   document.getElementById("result").innerHTML =
     "<h2>Processing...</h2>";
@@ -207,11 +235,12 @@ function sendClockAction(action) {
       "<h2>Clock action failed.</h2>" +
       "<p>Please try again.</p>";
 
-    badgeProcessed = false;
+    setTimeout(resetScanner, 3000);
   };
 
   document.body.appendChild(script);
 }
+
 
 window.showClockConfirmation =
 function(response) {
@@ -230,11 +259,10 @@ function(response) {
     return;
   }
 
-
   result.innerHTML =
-    "<h2>✓ " +
+    "<div class='success'>✓ " +
     response.action +
-    " SUCCESSFUL</h2>" +
+    " SUCCESSFUL</div>" +
 
     "<p><strong>" +
     response.name +
@@ -246,12 +274,13 @@ function(response) {
 
     "<p>Please remove your badge.</p>";
 
-
-  setTimeout(
-    resetScanner,
-    4000
-  );
+  setTimeout(resetScanner, 4000);
 };
+
+
+/* -----------------------------
+   RESET
+----------------------------- */
 
 function resetScanner() {
 
@@ -262,18 +291,20 @@ function resetScanner() {
     "Waiting for badge...";
 }
 
-function onScanFailure(error) {
-  // Ignore scanning errors while camera is looking
-}
 
-const scanner = new Html5QrcodeScanner(
-  "reader",
-  {
-    fps: 10,
-    qrbox: 250
-  },
-  false
-);
+/* -----------------------------
+   START QR SCANNER
+----------------------------- */
+
+const scanner =
+  new Html5QrcodeScanner(
+    "reader",
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    false
+  );
 
 scanner.render(
   onScanSuccess,
